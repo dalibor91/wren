@@ -1,8 +1,20 @@
 #include "os.h"
 #include "wren.h"
 
+#include "uv.h"
+
 #if __APPLE__
   #include "TargetConditionals.h"
+#endif
+
+#ifdef __APPLE__
+  #define WREN_ON_POSIX 1
+#elif __linux__
+  #define WREN_ON_POSIX 1
+#elif __unix__
+  #define WREN_ON_POSIX 1
+#elif defined(_POSIX_VERSION)
+  #define WREN_ON_POSIX 1
 #endif
 
 int numArgs;
@@ -42,20 +54,23 @@ void platformName(WrenVM* vm)
 void platformIsPosix(WrenVM* vm)
 {
   wrenEnsureSlots(vm, 1);
-  
-  #ifdef _WIN32
-    wrenSetSlotBool(vm, 0, false);
-  #elif __APPLE__
-    wrenSetSlotBool(vm, 0, true);
-  #elif __linux__
-    wrenSetSlotBool(vm, 0, true);
-  #elif __unix__
-    wrenSetSlotBool(vm, 0, true);
-  #elif defined(_POSIX_VERSION)
-    wrenSetSlotBool(vm, 0, true);
-  #else
-    wrenSetSlotString(vm, 0, false);
-  #endif
+#ifdef WREN_ON_POSIX
+  wrenSetSlotBool(vm, 0, true);
+#else
+  wrenSetSlotBool(vm, 0, false);
+#endif
+}
+
+void processGetPid(WrenVM* vm)
+{
+  wrenEnsureSlots(vm, 1);
+  wrenSetSlotDouble(vm, 0, (int)uv_os_getpid());
+}
+
+void processGetPPid(WrenVM* vm)
+{
+  wrenEnsureSlots(vm, 1);
+  wrenSetSlotDouble(vm, 0, (int)uv_os_getppid());
 }
 
 void processAllArguments(WrenVM* vm)
